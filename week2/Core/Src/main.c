@@ -21,7 +21,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,13 +41,15 @@
 
 /* USER CODE BEGIN PV */
 
+uint16_t buttonState = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
-
+void ButtonMatrixRead();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -92,144 +93,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  static uint8_t check = 0;
-	  static uint8_t state = 1
-
-			  ;
-	  static GPIO_PinState BT1_State[2] = {0};
-	  //static uint16_t delay = 500;
-	  static uint16_t timestamp = 0;
-	  BT1_State[0] = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
-	  //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, BT1_State);
-	  if ((BT1_State[0] == GPIO_PIN_RESET) && (BT1_State[1] == GPIO_PIN_SET)){
-		  check = 0;
-		  state += 1;
-		  if (state > 5){
-			  state = 1;
-		  }
-	  }
-
-	  BT1_State[1] = BT1_State[0];
-
-	  switch (state){
-
-		  case 1:
-
-  			  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-			  break;
-
-  		  case 2:
-
-			  if ((HAL_GetTick() - timestamp >= 3) && (check == 0)){
-				  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-				  timestamp = HAL_GetTick();
-				  check = 1;
-			  }
-			  else if ((HAL_GetTick() - timestamp >= 1) && (check == 1)){
-				  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-				  timestamp = HAL_GetTick();
-				  check = 0;
-			  }
-			  break;
-
-  		  case 3:
-
-			  if ((HAL_GetTick() - timestamp >= 1) && (check == 0)){
-				  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-				  timestamp = HAL_GetTick();
-				  check = 1;
-			  }
-			  else if ((HAL_GetTick() - timestamp >= 1) && (check == 1)){
-				  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-				  timestamp = HAL_GetTick();
-				  check = 0;
-			  }
-			  break;
-
-  		  case 4:
-
-			  if ((HAL_GetTick() - timestamp >= 1) && (check == 0)){
-				  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-				  timestamp = HAL_GetTick();
-				  check = 1;
-			  }
-			  else if ((HAL_GetTick() - timestamp >= 3) && (check == 1)){
-				  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-				  timestamp = HAL_GetTick();
-				  check = 0;
-			  }
-			  break;
-
-  		  case 5:
-
-  			  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-			  break;
-
-//		  case 0:
-//
-//			  if ((HAL_GetTick() - timestamp >= 500) && (check == 0)){
-//				  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-//				  timestamp = HAL_GetTick();
-//				  check = 1;
-//			  }
-//			  if ((HAL_GetTick() - timestamp >= 1500) && (check == 1)){
-//				  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-//				  timestamp = HAL_GetTick();
-//				  check = 0;
-//			  }
-//			  break;
-//
-//		  case 1:
-//
-//			  if ((HAL_GetTick() - timestamp >= 1500) && (check == 0)){
-//				  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-//				  timestamp = HAL_GetTick();
-//				  check = 1;
-//			  }
-//			  if ((HAL_GetTick() - timestamp >= 500) && (check == 1)){
-//				  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-//				  timestamp = HAL_GetTick();
-//				  check = 0;
-//			  }
-//			  break;
-
-//		  case 0:
-//
-//			  if (HAL_GetTick() - timestamp >= 1000){
-//				  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-//				  timestamp = HAL_GetTick();
-//			  }
-//			  break;
-//
-//		  case 1:
-//
-//			  if (HAL_GetTick() - timestamp >= 500){
-//				  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-//				  timestamp = HAL_GetTick();
-//			  }
-//			  break;
-
-//		  case 2:
-//
-//			  if (HAL_GetTick() - timestamp >= 250){
-//				  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-//				  timestamp = HAL_GetTick();
-//			  }
-//			  break;
-//
-//		  case 3:
-//
-//			  if (HAL_GetTick() - timestamp >= 1000/6){
-//				  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-//				  timestamp = HAL_GetTick();
-//			  }
-//			  break;
-
-	  }
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  ButtonMatrixRead();
   }
   /* USER CODE END 3 */
 }
@@ -294,13 +161,19 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LD2_Pin|L4_Pin|L1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : BT1_Pin */
-  GPIO_InitStruct.Pin = BT1_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(L2_GPIO_Port, L2_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(L3_GPIO_Port, L3_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : B1_Pin */
+  GPIO_InitStruct.Pin = B1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BT1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : USART_TX_Pin USART_RX_Pin */
   GPIO_InitStruct.Pin = USART_TX_Pin|USART_RX_Pin;
@@ -317,9 +190,114 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : L4_Pin L1_Pin */
+  GPIO_InitStruct.Pin = L4_Pin|L1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : R1_Pin R4_Pin R2_Pin R3_Pin */
+  GPIO_InitStruct.Pin = R1_Pin|R4_Pin|R2_Pin|R3_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : L2_Pin */
+  GPIO_InitStruct.Pin = L2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(L2_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : L3_Pin */
+  GPIO_InitStruct.Pin = L3_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(L3_GPIO_Port, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
+
+GPIO_TypeDef* BTRport[4] = {R1_GPIO_Port, R2_GPIO_Port, R3_GPIO_Port, R4_GPIO_Port};
+uint16_t BTRpin[4] = {R1_Pin, R2_Pin, R3_Pin, R4_Pin};
+
+GPIO_TypeDef* BTLport[4] = {L1_GPIO_Port, L2_GPIO_Port, L3_GPIO_Port, L4_GPIO_Port};
+uint16_t BTLpin[4] = {L1_Pin, L2_Pin, L3_Pin, L4_Pin};
+
+uint8_t check_p = 1;
+uint8_t count = 0;
+uint8_t pos = 0;
+
+void ButtonMatrixRead(){
+
+	static uint8_t L = 0;
+	static uint32_t timeStamp = 0;
+	if (HAL_GetTick() - timeStamp >= 100){
+		timeStamp = HAL_GetTick();
+
+		for (int i = 0; i<4; i++){
+
+			if (HAL_GPIO_ReadPin(BTRport[i], BTRpin[i]) == GPIO_PIN_RESET){
+
+				pos = i + (L*4);
+
+				if (pos == 3){
+					L = 0;
+					count = 0;
+					check_p = 1;
+					HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+				}
+				else if (pos == 15){
+					if ((check_p == 1)&&(count == 11)){
+						HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+						L = 0;
+						count = 0;
+						check_p = 1;
+					}
+					else{
+						HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+					}
+				}
+				else if ((pos != 7)&&(pos != 11)&&(pos != 13)&&(pos != 14)){
+					if (count == 0){
+						uint8_t check_n = (6==pos);
+						check_p = (check_p&&check_n);
+					}
+					else if ((count == 1)&&(count == 2)&&(count == 10)){
+						uint8_t check_n = (10==pos);
+						check_p = (check_p&&check_n);
+					}
+					else if (count == 3){
+						uint8_t check_n = (4==pos);
+						check_p = (check_p&&check_n);
+					}
+					else if ((count == 4)&&(count == 6)&&(count == 7)&&(count == 8)){
+						uint8_t check_n = (12==pos);
+						check_p = (check_p&&check_n);
+					}
+					else if (count == 5){
+						uint8_t check_n = (5==pos);
+						check_p = (check_p&&check_n);
+					}
+					else if (count == 9){
+						uint8_t check_n = (0==pos);
+						check_p = (check_p&&check_n);
+					}
+					count += 1;
+				}
+			}
+		}
+
+		HAL_GPIO_WritePin(BTLport[L], BTLpin[L], GPIO_PIN_SET);
+		uint8_t L_p = (L+1)%4;
+		HAL_GPIO_WritePin(BTLport[L_p], BTLpin[L_p], GPIO_PIN_RESET);
+		L = L_p;
+
+	}
+}
 
 /* USER CODE END 4 */
 
