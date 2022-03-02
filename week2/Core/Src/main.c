@@ -230,6 +230,7 @@ uint16_t BTLpin[4] = {L1_Pin, L2_Pin, L3_Pin, L4_Pin};
 uint8_t check_p = 1;
 uint8_t count = 0;
 uint8_t pos = 0;
+uint8_t false = 0;
 
 void ButtonMatrixRead(){
 
@@ -246,9 +247,17 @@ void ButtonMatrixRead(){
 
 				if (pos == 3){
 					L = 0;
+					false = 0;
 					count = 0;
 					check_p = 1;
 					HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+				}
+				else if (pos == 7){
+					false -= 1;
+					count -= 1;
+					if (false == 0){
+						check_p = 1;
+					}
 				}
 				else if (pos == 15){
 					if ((check_p == 1)&&(count == 11)){
@@ -261,30 +270,36 @@ void ButtonMatrixRead(){
 						HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 					}
 				}
-				else if ((pos != 7)&&(pos != 11)&&(pos != 13)&&(pos != 14)){
-					if (count == 0){
-						uint8_t check_n = (6==pos);
-						check_p = (check_p&&check_n);
+				else if ((pos != 11)&&(pos != 13)&&(pos != 14)){
+
+					if ((count == 0)&&(pos==6)){
+						check_p = (check_p&&1);
 					}
-					else if ((count == 1)&&(count == 2)&&(count == 10)){
-						uint8_t check_n = (10==pos);
-						check_p = (check_p&&check_n);
+
+					else if (((count == 1)||(count == 2)||(count == 10))&&(pos==10)){
+						check_p = (check_p&&1);
 					}
-					else if (count == 3){
-						uint8_t check_n = (4==pos);
-						check_p = (check_p&&check_n);
+
+					else if ((count == 3)&&(pos==4)){
+						check_p = (check_p&&1);
 					}
-					else if ((count == 4)&&(count == 6)&&(count == 7)&&(count == 8)){
-						uint8_t check_n = (12==pos);
-						check_p = (check_p&&check_n);
+
+					else if (((count == 4)||(count == 6)||(count == 7)||(count == 8))&&(pos==12)){
+						check_p = (check_p&&1);
 					}
-					else if (count == 5){
-						uint8_t check_n = (5==pos);
-						check_p = (check_p&&check_n);
+
+					else if ((count == 5)&&(pos==5)){
+						check_p = (check_p&&1);
 					}
-					else if (count == 9){
-						uint8_t check_n = (0==pos);
-						check_p = (check_p&&check_n);
+
+					else if ((count == 9)&&(pos==0)){
+						check_p = (check_p&&1);
+					}
+					else{
+						check_p = 0;
+					}
+					if (check_p == 0){
+						false += 1;
 					}
 					count += 1;
 				}
