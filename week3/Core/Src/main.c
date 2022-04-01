@@ -49,6 +49,11 @@ TIM_HandleTypeDef htim11;
 uint8_t ADCUpdateFlag = 0;
 //Store ADC Value
 uint16_t ADCFeedBack = 0;
+uint16_t ADCpreset = 1241;
+
+int16_t error = 0,intregral = 0,derivative = 0;
+float Ki = 0;
+float Kd = 0;
 
 uint16_t PWMOut = 3000; //= 30% PWM
 
@@ -132,9 +137,13 @@ int main(void)
 
 	}
 
-//	if (ADCUpdateFlag) {
-//		ADCUpdateFlag = 0;
-//	}
+	if (ADCUpdateFlag) {
+		ADCUpdateFlag = 0;
+		error = ADCpreset - ADCFeedBack;
+		PWMOut += error * ((PWMOut / ADCFeedBack) / 2) + Ki * intregral + Kd*(error-derivative);
+		intregral += error;
+		derivative = error;
+	}
   }
   /* USER CODE END 3 */
 }
@@ -402,7 +411,6 @@ static void MX_GPIO_Init(void)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
 	ADCFeedBack = HAL_ADC_GetValue(&hadc1);
-	PWMOut = ((1241-ADCFeedBack)*(PWMOut/ADCFeedBack))+PWMOut;
 	ADCUpdateFlag = 1;
 }
 
