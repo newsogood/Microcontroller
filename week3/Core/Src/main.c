@@ -46,7 +46,14 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim11;
 
 /* USER CODE BEGIN PV */
+uint8_t ADCUpdateFlag = 0;
+//Store ADC Value
+uint16_t ADCFeedBack = 0;
 
+uint16_t PWMOut = 3000; //= 30% PWM
+
+uint64_t _micro = 0;
+uint64_t TimeOutputLoop = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -56,6 +63,7 @@ static void MX_ADC1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM11_Init(void);
+uint64_t micros();
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -100,14 +108,33 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
+  //ADC and Timer That Call ADC
+	HAL_ADC_Start_IT(&hadc1);
+	HAL_TIM_Base_Start(&htim3);
 
+	//timer and OC that generate PWM
+	HAL_TIM_Base_Start(&htim1);
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
+	//Timer For implement micros()
+	HAL_TIM_Base_Start_IT(&htim11);
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	if(micros() - TimeOutputLoop > 500){
+		TimeOutputLoop = micros();
+		__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, PWMOut);
+
+	}
+
+//	if (ADCUpdateFlag) {
+//		ADCUpdateFlag = 0;
+//	}
   }
   /* USER CODE END 3 */
 }
@@ -371,6 +398,24 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+	ADCFeedBack = HAL_ADC_GetValue(&hadc1);
+	PWMOut = ((1241-ADCFeedBack)*(PWMOut/ADCFeedBack))+PWMOut;
+	ADCUpdateFlag = 1;
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim == &htim11){
+	  _micro += 65535;
+  }
+}
+
+uint64_t micros() {
+	return _micro + htim11.Instance->CNT;
+}
 
 /* USER CODE END 4 */
 
